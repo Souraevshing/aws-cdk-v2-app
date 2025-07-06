@@ -1,0 +1,1 @@
+# AWS cloud development kit v2 app showcasing s3 bucket lambda and using dynamodb for deploying a static site
