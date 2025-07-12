@@ -1,22 +1,24 @@
-'use client';
+"use client";
 
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useCreateProduct } from '@/lib/hooks';
-import { ImageUpload } from '@/components/image-upload';
+import { ImageUpload } from "@/components/image-upload";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { useCreateProduct } from "@/lib/hooks";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
 const productSchema = z.object({
-  name: z.string().min(1, 'Product name is required'),
-  description: z.string().min(1, 'Description is required'),
-  price: z.number().min(0, 'Price must be positive'),
-  imageFile: z.any().refine((file) => file !== null, 'Product image is required'),
+  name: z.string().min(1, "Product name is required"),
+  description: z.string().min(1, "Description is required"),
+  price: z.number().min(0, "Price must be positive"),
+  imageFile: z
+    .any()
+    .refine((file) => file !== null, "Product image is required"),
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
@@ -34,8 +36,8 @@ export function ProductForm() {
   } = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
     defaultValues: {
-      name: '',
-      description: '',
+      name: "",
+      description: "",
       price: 0,
     },
   });
@@ -50,8 +52,8 @@ export function ProductForm() {
         imageFile: imageFile,
       });
       reset({
-        name: '',
-        description: '',
+        name: "",
+        description: "",
         price: 0,
       });
       setImageFile(null);
@@ -66,29 +68,73 @@ export function ProductForm() {
         <CardTitle>Create New Product</CardTitle>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className='space-y-4'>
-          <div className='space-y-2'>
-            <Label htmlFor='name'>Product Name *</Label>
-            <Input id='name' {...register('name')} placeholder='Enter product name' className={errors.name ? 'border-red-500' : ''} />
-            {errors.name && <p className='text-sm text-red-500'>{errors.name.message}</p>}
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="name">Product Name *</Label>
+            <Input
+              id="name"
+              {...register("name")}
+              placeholder="Enter product name"
+              className={errors.name ? "border-red-500" : ""}
+            />
+            {errors.name && (
+              <p className="text-sm text-red-500">{errors.name.message}</p>
+            )}
           </div>
 
-          <div className='space-y-2'>
-            <Label htmlFor='description'>Description *</Label>
-            <Textarea id='description' {...register('description')} placeholder='Enter product description' rows={3} className={errors.description ? 'border-red-500' : ''} />
-            {errors.description && <p className='text-sm text-red-500'>{errors.description.message}</p>}
+          <div className="space-y-2">
+            <Label htmlFor="description">Description *</Label>
+            <Textarea
+              id="description"
+              {...register("description")}
+              placeholder="Enter product description"
+              rows={3}
+              className={errors.description ? "border-red-500" : ""}
+            />
+            {errors.description && (
+              <p className="text-sm text-red-500">
+                {errors.description.message}
+              </p>
+            )}
           </div>
 
-          <div className='space-y-2'>
-            <Label htmlFor='price'>Price *</Label>
-            <Input id='price' type='number' step='0.01' min='0' {...register('price', { valueAsNumber: true })} placeholder='0.00' className={errors.price ? 'border-red-500' : ''} />
-            {errors.price && <p className='text-sm text-red-500'>{errors.price.message}</p>}
+          <div className="space-y-2">
+            <Label htmlFor="price">Price *</Label>
+            <Input
+              id="price"
+              type="number"
+              step="0.01"
+              min="0"
+              onKeyDown={(e) => {
+                if (e.key === "ArrowUp" || e.key === "ArrowDown") {
+                  e.preventDefault();
+                }
+              }}
+              {...register("price", { valueAsNumber: true })}
+              placeholder="0.00"
+              className={errors.price ? "border-red-500" : ""}
+            />
+            {errors.price && (
+              <p className="text-sm text-red-500">{errors.price.message}</p>
+            )}
           </div>
 
-          <ImageUpload onImageChange={setImageFile} currentImage={imageFile ? URL.createObjectURL(imageFile) : undefined} error={errors.imageFile?.message as string} />
+          <ImageUpload
+            onImageChange={setImageFile}
+            currentImage={
+              imageFile ? URL.createObjectURL(imageFile) : undefined
+            }
+            error={errors.imageFile?.message as string}
+          />
 
-          <Button type='submit' className='w-full' disabled={isSubmitting || createProduct.isPending}>
-            {isSubmitting || createProduct.isPending ? 'Creating...' : 'Create Product'}
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={isSubmitting || createProduct.isPending}
+          >
+            {isSubmitting || createProduct.isPending
+              ? "Creating..."
+              : "Create Product"}
           </Button>
         </form>
       </CardContent>

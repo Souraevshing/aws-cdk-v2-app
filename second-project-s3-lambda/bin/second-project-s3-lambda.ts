@@ -1,20 +1,30 @@
 #!/usr/bin/env node
-import * as cdk from 'aws-cdk-lib';
-import { SecondProjectS3LambdaStack } from '../lib/second-project-s3-lambda-stack';
+import * as cdk from "aws-cdk-lib";
 
+import { SecondProjectS3LambdaStack } from "../lib/second-project-s3-lambda-stack";
+import { SecretsManagerStack } from "../lib/secrets-environment-variable-stack";
+
+// create or initialize cdk app
 const app = new cdk.App();
-new SecondProjectS3LambdaStack(app, 'SecondProjectS3LambdaStack', {
-  /* If you don't specify 'env', this stack will be environment-agnostic.
-   * Account/Region-dependent features and context lookups will not work,
-   * but a single synthesized template can be deployed anywhere. */
 
-  /* Uncomment the next line to specialize this stack for the AWS Account
-   * and Region that are implied by the current CLI configuration. */
-  // env: { account: process.env.CDK_DEFAULT_ACCOUNT, region: process.env.CDK_DEFAULT_REGION },
+// create instance for SecretsManagerStack
 
-  /* Uncomment the next line if you know exactly what Account and Region you
-   * want to deploy the stack to. */
-  // env: { account: '123456789012', region: 'us-east-1' },
+// it is used for using the secrets from SecretsManagerStack
+const secretsStack = new SecretsManagerStack(app, "SecretsManagerStack");
 
-  /* For more information, see https://docs.aws.amazon.com/cdk/latest/guide/environments.html */
-});
+// create a root lambdaStack for SecondProjectS3LambdaStack that is the main file which is executed by default.
+
+// and as an argument passing secretsStack that is a reference to SecretsManagerStack
+const lambdaStack = new SecondProjectS3LambdaStack(
+  app,
+  "SecondProjectS3LambdaStack",
+  { secretsStack }
+);
+
+lambdaStack.addDependency(secretsStack);
+
+/**
+ * In order to run this app that is having 2 stacks i.e. Since this app includes more than a single stack, specify which stacks to use (wildcards are supported) or specify `--all`
+Stacks: SecretsManagerStack · SecondProjectS3LambdaStack
+ */
+`npx cdk deploy --all`;
