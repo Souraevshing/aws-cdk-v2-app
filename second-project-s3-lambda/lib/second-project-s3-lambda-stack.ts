@@ -33,16 +33,35 @@ export class SecondProjectS3LambdaStack extends cdk.Stack {
       functionName: `${this.stackName}-HomeRouteLambdaStack`,
     });
 
+    const createProfile = new NodejsFunction(this, "createProfile", {
+      runtime: lambda.Runtime.NODEJS_22_X,
+      entry: path.join(__dirname, "../src/lambda/handler.ts"),
+      handler: "createProfile",
+      functionName: `${this.stackName}-CreateProfileLambdaStack`,
+    });
+
     const http = new apiGateway.HttpApi(this, "firstHttpApi", {
       apiName: "First Http API",
       description: "First Http API with CDK",
     });
+
+    // GET / route
     http.addRoutes({
       path: "/",
       methods: [apiGateway.HttpMethod.GET],
       integration: new apiGatewayIntegrations.HttpLambdaIntegration(
         "HomeRouteIntegration",
         homeLambda
+      ),
+    });
+
+    // create POST route
+    http.addRoutes({
+      path: "/profile",
+      methods: [apiGateway.HttpMethod.POST],
+      integration: new apiGatewayIntegrations.HttpLambdaIntegration(
+        "ProfileRouteIntegration",
+        createProfile
       ),
     });
 
