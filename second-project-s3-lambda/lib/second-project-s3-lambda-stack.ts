@@ -40,9 +40,15 @@ export class SecondProjectS3LambdaStack extends cdk.Stack {
       functionName: `${this.stackName}-CreateProfileLambdaStack`,
     });
 
+    // allow all origin
     const http = new apiGateway.HttpApi(this, "firstHttpApi", {
       apiName: "First Http API",
       description: "First Http API with CDK",
+      corsPreflight: {
+        allowOrigins: ["http://localhost:3000"],
+        allowMethods: [apiGateway.CorsHttpMethod.ANY],
+        allowHeaders: ["*"],
+      },
     });
 
     // GET / route
