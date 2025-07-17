@@ -32,11 +32,20 @@ export class AwsUsersApiStack extends cdk.Stack {
       apiName: "Users api",
       description: "CRUD operations for user",
       corsPreflight: {
-        allowOrigins: ["*"],
-        allowMethods: [apiGateway.CorsHttpMethod.ANY],
-        allowHeaders: ["*"],
+        allowOrigins: ["http://localhost:3000"],
+        allowMethods: [
+            apiGateway.CorsHttpMethod.GET,
+            apiGateway.CorsHttpMethod.POST,
+            apiGateway.CorsHttpMethod.PUT,
+            apiGateway.CorsHttpMethod.DELETE,
+            apiGateway.CorsHttpMethod.OPTIONS
+        ],
+        allowHeaders: ["Content-Type", "Authorization"],
+        allowCredentials: false
       },
     });
+
+
 
     // routes for calling HttpMethods and perform operations
     const routes = [

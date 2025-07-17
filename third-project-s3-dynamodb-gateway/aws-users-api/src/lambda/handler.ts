@@ -1,4 +1,19 @@
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import {
+  DeleteCommand,
+  DynamoDBDocumentClient,
+  GetCommand,
+  PutCommand,
+  ScanCommand,
+  UpdateCommand,
+} from "@aws-sdk/lib-dynamodb";
+import { faker } from "@faker-js/faker";
 import { APIGatewayProxyEventV2, APIGatewayProxyResultV2 } from "aws-lambda";
+import { v4 as uuidv4 } from "uuid";
+
+const dynamoDBClient = new DynamoDBClient({});
+const dynamoDBDocumentClient = DynamoDBDocumentClient.from(dynamoDBClient);
+const TABLE_NAME = process.env.TABLE_NAME!;
 
 export const handler = async (
   e: APIGatewayProxyEventV2
@@ -6,7 +21,7 @@ export const handler = async (
   //fetch the http method
   const method = e.requestContext.http.method;
 
-  //get the path entered in the url to trigger any type of http method
+  //get the path entered the url to trigger any type of http method
   const path = e.requestContext.http.path;
 
   try {
@@ -63,9 +78,13 @@ export const handler = async (
 async function getAllUsers(
   e: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResultV2> {
+  const result = await dynamoDBClient.send(
+    new ScanCommand({ TableName: TABLE_NAME, Select: "ALL_ATTRIBUTES" })
+  );
+
   return {
     statusCode: 200,
-    body: JSON.stringify({ message: `Get all Users` }),
+    body: JSON.stringify({ data: result.Items || [] }),
   };
 }
 
@@ -73,17 +92,43 @@ async function getAllUsers(
 async function createUser(
   e: APIGatewayProxyEventV2
 ): Promise<APIGatewayProxyResultV2> {
+  const { name, email }: { name: string; email: string } = JSON.parse(e.body!);
+  const user = {
+    id: uuidv4(),
+    name: faker.person.fullName(),
+    email: faker.internet.email(),
+    createdAt: new Date().toISOString(),
+  };
+
+  await dynamoDBClient.send(
+    new PutCommand({
+      TableName: TABLE_NAME,
+      Item: user,
+    })
+  );
+
   return {
     statusCode: 201,
-    body: JSON.stringify({ message: "User created" }),
+    body: JSON.stringify({ data: user }),
   };
 }
 
 // get user by id
 async function getUser(userId: string): Promise<APIGatewayProxyResultV2> {
+  const result = await dynamoDBClient.send(
+    new GetCommand({ TableName: TABLE_NAME, Key: { id: userId } })
+  );
+
+  if (!result.Item) {
+    return {
+      statusCode: 404,
+      body: JSON.stringify({ message: "User not found" }),
+    };
+  }
+
   return {
     statusCode: 200,
-    body: JSON.stringify({ message: `User ${userId}  fetched` }),
+    body: JSON.stringify({ data: result.Item }),
   };
 }
 
@@ -92,14 +137,40 @@ async function updateUser(
   e: APIGatewayProxyEventV2,
   userId: string
 ): Promise<APIGatewayProxyResultV2> {
+  const { name, email } = JSON.parse(e.body!);
+
+  const result = await dynamoDBClient.send(
+    new UpdateCommand({
+      TableName: TABLE_NAME,
+      Key: { id: userId },
+      UpdateExpression: "SET #name = :name, #email = :email",
+      ExpressionAttributeNames: {
+        "#name": "name",
+        "#email": "email",
+      },
+      ExpressionAttributeValues: {
+        ":name": name || null,
+        ":email": email || null,
+      },
+      ReturnValues: "ALL_NEW",
+    })
+  );
+
   return {
     statusCode: 200,
-    body: JSON.stringify({ message: `User ${userId} updated` }),
+    body: JSON.stringify({ data: result.Attributes }),
   };
 }
 
 // delete user by id
 async function deleteUser(userId: string): Promise<APIGatewayProxyResultV2> {
+  await dynamoDBClient.send(
+    new DeleteCommand({
+      TableName: TABLE_NAME,
+      Key: { id: userId },
+    })
+  );
+
   return {
     statusCode: 200,
     body: JSON.stringify({ message: `User ${userId} deleted` }),
